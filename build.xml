@@ -1,0 +1,151 @@
+<project name="Web Application" default="build" basedir=".">
+
+    <property file="build.properties"/>
+    <path id="classpath">
+        <fileset dir="/usr/share/java">
+            <include name="*.jar"/>
+        </fileset>
+        <fileset dir="${basedir}/lib">
+          <include name="*.jar"/>
+        </fileset>
+        <fileset dir="${tomcat.share}/bin">
+          <include name="*.jar"/>
+        </fileset>
+        <pathelement location="${catalina.home}/lib"/>
+        <fileset dir="${tomcat.share}/lib">
+          <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    <taskdef name="deploy"    classname="org.apache.catalina.ant.DeployTask" classpathref="classpath"/>
+    <taskdef name="install"   classname="org.apache.catalina.ant.InstallTask" classpathref="classpath"/>
+    <taskdef name="list"      classname="org.apache.catalina.ant.ListTask" classpathref="classpath"/>
+    <taskdef name="reload"    classname="org.apache.catalina.ant.ReloadTask" classpathref="classpath"/>
+    <taskdef name="remove"    classname="org.apache.catalina.ant.RemoveTask" classpathref="classpath"/>
+    <taskdef name="resources" classname="org.apache.catalina.ant.ResourcesTask" classpathref="classpath"/>
+    <taskdef name="roles"     classname="org.apache.catalina.ant.RolesTask" classpathref="classpath"/>
+    <taskdef name="start"     classname="org.apache.catalina.ant.StartTask" classpathref="classpath"/>
+    <taskdef name="stop"      classname="org.apache.catalina.ant.StopTask" classpathref="classpath"/>
+    <taskdef name="undeploy"  classname="org.apache.catalina.ant.UndeployTask" classpathref="classpath"/>
+
+
+    <target name="init">
+        <tstamp/>
+    </target>
+
+    <target name="clean" description="Deletes the Web Application's war directory and web archive file">
+        <echo message="Deleting ${app.name}'s war directory and web archive file ..."/>
+        <delete dir="${basedir}/war"/>
+        <delete file="${basedir}/${app.name}.war"/>
+    </target>
+
+    <target name="prepare" description="Creates the Web Application's war directory" depends="init">
+        <echo message="Creating ${app.name}'s war directory ..."/>
+        <mkdir dir="${basedir}/war"/>
+        <mkdir dir="${basedir}/war/WEB-INF"/>
+        <mkdir dir="${basedir}/war/WEB-INF/classes"/>
+        <mkdir dir="${basedir}/war/WEB-INF/lib"/>
+    </target>
+
+    <target name="build" description="Builds the Web Application" depends="prepare">
+        <echo message="Building ${app.name} ..."/>
+        <javac srcdir="${basedir}/src" destdir="${basedir}/war/WEB-INF/classes">
+            <include name="**/*.java"/>
+            <classpath refid="classpath"/>
+        </javac>
+        <copy todir="${basedir}/war/WEB-INF">
+            <fileset dir="${basedir}/web/WEB-INF">
+                <include name="web.xml"/>
+            </fileset>
+        </copy>
+        <copy todir="${basedir}/war">
+            <fileset dir="${basedir}/web">
+                <include name="**/*.html"/>
+                <include name="**/*.jsp"/>
+                <include name="**/*.txt"/>
+                <include name="**/*.zip"/>
+                <include name="**/*.gif"/>
+                <include name="**/*.jpg"/>
+                <include name="**/*.png"/>
+            </fileset>
+        </copy>
+        <copy todir="${basedir}/war/META-INF">
+            <fileset dir=".">
+                <include name="context.xml" />
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="package" description="Packages the Web Application's web archive file" depends="build">
+        <echo message="Packaging ${app.name}'s web archive file ..."/>
+        <delete file="${basedir}/${app.name}.war"/>
+        <jar jarfile="${basedir}/${app.name}.war">
+            <fileset dir="${basedir}/war" includes="**"/>
+        </jar>
+    </target>
+
+    <target name="install" description="Installs the Web Application" depends="package">
+        <echo message="Installing ${app.name} ..."/>
+        <install url="${manager.url}" username="${username}" password="${password}" path="/${app.name}"
+            config="file:${basedir}/war/META-INF/context.xml" war="file:${basedir}/${app.name}.war"/>
+    </target>
+
+    <target name="reload" description="Reloads the Web Application" depends="package">
+        <echo message="Reloading ${app.name} ..."/>
+        <reload url="${manager.url}" username="${username}" password="${password}" path="/${app.name}"/>
+    </target>
+
+    <target name="remove" description="Removes the Web Application">
+        <echo message="Removing ${app.name} ..."/>
+        <remove url="${manager.url}" username="${username}" password="${password}" path="/${app.name}"/>
+    </target>
+
+    <target name="deploy" description="Deploys the Web Application" depends="package">
+        <echo message="Deploying ${app.name} ..."/>
+        <deploy url="${manager.url}" username="${username}" password="${password}" path="/${app.name}"
+            war="file:${basedir}/${app.name}.war"/>
+    </target>
+
+    <target name="undeploy" description="Undeploys the Web Application">
+        <echo message="Undeploying ${app.name} ..."/>
+        <undeploy url="${manager.url}" username="${username}" password="${password}" path="/${app.name}"/>
+    </target>
+
+    <target name="start" description="Start the Web Application">
+        <echo message="Start the Web Application ..."/>
+        <start url="${manager.url}" username="${username}" password="${password}" path="/${app.name}"/>
+    </target>
+
+    <target name="stop" description="Stop the Web Application">
+        <echo message="Stop the Web Application ..."/>
+        <stop url="${manager.url}" username="${username}" password="${password}" path="/${app.name}"/>
+    </target>
+
+    <target name="list" description="Lists Installed and Deployed Web Applications">
+        <echo message="Listing Installed and Deployed Web Applications ..."/>
+        <list url="${manager.url}" username="${username}" password="${password}"/>
+    </target>
+
+    <target name="resources" description="Lists Tomcat Global Resources of All Types">
+        <echo message="Listing Tomcat Global Resources of All Types ..."/>
+        <resources url="${manager.url}" username="${username}" password="${password}"/>
+    </target>
+
+    <target name="roles" description="Lists Tomcat Security Roles">
+        <echo message="Listing Tomcat Security Roles ..."/>
+        <roles url="${manager.url}" username="${username}" password="${password}"/>
+    </target>
+
+    <target name="debug">
+        <echo message="Lists the properties for debugging purposes ..."/>
+        <echo message="app.name    = ${app.name}"/>
+        <echo message="basedir     = ${basedir}"/>
+        <echo message="user.home   = ${user.home}"/>
+        <echo message="tomcat.home = ${tomcat.home}"/>
+        <echo message="manager.url = ${manager.url}"/>
+        <echo message="username    = ${username}"/>
+   <!-- <echo message="password    = ${password}"/> commented out for security reasons -->
+   </target>
+
+</project>
+

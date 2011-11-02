@@ -1,0 +1,5 @@
+<Context path="/OAI_harvest_console" docBase="harvester" debug="1" reloadable="true" crossContext="true">
+
+    <Logger className="org.apache.catalina.logger.FileLogger" prefix="localhost_OAI_harvest_console." suffix=".txt" timestamp="true"/>
+
+</Context>
